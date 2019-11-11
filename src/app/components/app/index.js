@@ -4,37 +4,59 @@ import ImageItem from '../image-item';
 import SearchBar from '../search-bar';
 
 export class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      images: {},
-      search: '',
-      page: 1,
-    };
-  }
+  state = {
+    images: {},
+    search: '',
+    page: 1,
+    isLoading: false,
+  };
 
   componentDidMount() {
     this.loadImagesPage();
+    window.addEventListener('scroll', this.handleScroll);
   }
 
   componentDidUpdate(prevProps, prevState) {
     const { search, page } = this.state;
+
     if (prevState.search !== search || prevState.page !== page) {
       this.loadImagesPage();
     }
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this.handleScroll);
+  }
+
   parseImages = data => {
     const { images } = this.state;
+
     return data.reduce((arr, { id, farm, secret, server, title }) => {
       const url = `https://farm${farm}.staticflickr.com/${server}/${id}_${secret}.jpg`;
       arr[url] = title;
       return arr;
-    }, []);
+    }, images);
   };
 
   handleSearch = ({ target: { value: q } }) => {
     this.setState({ search: q, images: {} });
+  };
+
+  handleScroll = () => {
+    const { isLoading } = this.state;
+
+    if (!isLoading && this.getScrollPercent() >= 80) {
+      this.setState(prevState => ({
+        page: prevState.page + 1,
+      }));
+    }
+  };
+
+  getScrollPercent = () => {
+    const { documentElement: h, body: b } = document;
+    const st = 'scrollTop';
+    const sh = 'scrollHeight';
+    return ((h[st] || b[st]) / ((h[sh] || b[sh]) - h.clientHeight)) * 100;
   };
 
   loadImagesPage() {
@@ -48,7 +70,6 @@ export class App extends Component {
   loadImages = async () => {
     let images;
     let { search: q, page } = this.state;
-    console.log('---', q);
     const options = {
       method: `flickr.photos.${q.length ? 'search' : 'getRecent'}`,
       page,
@@ -60,11 +81,15 @@ export class App extends Component {
       options.extras = 'description, machine_tags';
     }
 
+    this.setState({ isLoading: true });
+
     ({
       data: {
         photos: { photo: images },
       },
     } = await getImages(options));
+
+    this.setState({ isLoading: false });
 
     return images;
   };
