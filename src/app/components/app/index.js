@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { getImages } from '../../api';
-import ImageItem from '../image-item';
-import SearchBar from '../search-bar';
+import Header from '../header';
+import Gallery from '../gallery';
+import { scrollService } from '../../services/scroll-service';
 
 export class App extends Component {
   state = {
@@ -12,7 +13,7 @@ export class App extends Component {
   };
 
   componentDidMount() {
-    this.loadImagesPage();
+    this.loadImages();
     window.addEventListener('scroll', this.handleScroll);
   }
 
@@ -20,7 +21,7 @@ export class App extends Component {
     const { search, page } = this.state;
 
     if (prevState.search !== search || prevState.page !== page) {
-      this.loadImagesPage();
+      this.loadImages();
     }
   }
 
@@ -28,12 +29,16 @@ export class App extends Component {
     window.removeEventListener('scroll', this.handleScroll);
   }
 
+  parseImageUrl = ({ id, farm, secret, server }) => {
+    return `https://farm${farm}.staticflickr.com/${server}/${id}_${secret}.jpg`;
+  };
+
   parseImages = data => {
     const { images } = this.state;
 
-    return data.reduce((arr, { id, farm, secret, server, title }) => {
-      const url = `https://farm${farm}.staticflickr.com/${server}/${id}_${secret}.jpg`;
-      arr[url] = title;
+    return data.reduce((arr, image) => {
+      const url = this.parseImageUrl(image);
+      arr[url] = image.title;
       return arr;
     }, images);
   };
@@ -45,53 +50,27 @@ export class App extends Component {
   handleScroll = () => {
     const { isLoading } = this.state;
 
-    if (!isLoading && this.getScrollPercent() >= 80) {
+    if (!isLoading && scrollService.getScrollPercent() >= 80) {
       this.setState(prevState => ({
         page: prevState.page + 1,
       }));
     }
   };
 
-  getScrollPercent = () => {
-    const { documentElement: h, body: b } = document;
-    const st = 'scrollTop';
-    const sh = 'scrollHeight';
-    return ((h[st] || b[st]) / ((h[sh] || b[sh]) - h.clientHeight)) * 100;
-  };
-
-  loadImagesPage() {
-    this.loadImages()
-      .then(data => this.parseImages(data))
-      .then(images => this.setState({ images }))
-      // eslint-disable-next-line no-console
-      .catch(e => console.error(e));
-  }
-
-  loadImages = async () => {
-    let images;
-    let { search: q, page } = this.state;
-    const options = {
-      method: `flickr.photos.${q.length ? 'search' : 'getRecent'}`,
-      page,
-    };
-
-    if (q.length) {
-      options.sort = 'relevance';
-      options.text = `${q}`;
-      options.extras = 'description, machine_tags';
-    }
+  loadImages = () => {
+    const { search, page } = this.state;
 
     this.setState({ isLoading: true });
 
-    ({
-      data: {
-        photos: { photo: images },
-      },
-    } = await getImages(options));
-
-    this.setState({ isLoading: false });
-
-    return images;
+    getImages(search, page)
+      .then(({ data: { photos: { photo: images } } }) => {
+        this.setState({ isLoading: false });
+        return images;
+      })
+      .then(images => this.parseImages(images))
+      .then(images => this.setState({ images }))
+      // eslint-disable-next-line no-console
+      .catch(e => console.error(e));
   };
 
   render() {
@@ -99,17 +78,9 @@ export class App extends Component {
 
     return (
       <div className="container">
-        <h1 className="font-weight-light text-center text-lg-left mt-4 mb-0">
-          Thumbnail Gallery
-        </h1>
+        <Header handleSearch={this.handleSearch} />
 
-        <SearchBar handleSearch={this.handleSearch} />
-
-        <div className="images">
-          {Object.entries(images).map(([url, title]) => (
-            <ImageItem key={url} url={url} title={title} />
-          ))}
-        </div>
+        <Gallery images={images} />
       </div>
     );
   }
