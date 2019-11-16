@@ -24,3 +24,4 @@ export const getImages = (search, page) => {
       ...options,
     },
   });
+};
