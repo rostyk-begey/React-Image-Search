@@ -1,0 +1,20 @@
+.search-bar {
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 24px 10px;
+
+  input {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: 2px solid rgb(204, 204, 204);
+    outline: none;
+    font-size: 17px;
+    color: rgb(100, 100, 100);
+
+    &::placeholder {
+      font-size: 17px;
+    }
+  }
+}

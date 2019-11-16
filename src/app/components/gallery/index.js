@@ -1,5 +1,6 @@
 import React from 'react';
 import ImageItem from '../image-item';
+import './styles.scss';
 
 const Gallery = ({ images }) => (
   <section className="images">
