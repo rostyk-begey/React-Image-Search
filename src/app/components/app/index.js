@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import { getImages } from '../../api';
 import Header from '../header';
 import Gallery from '../gallery';
@@ -60,9 +61,15 @@ export class App extends Component {
   loadImages = () => {
     const { search, page } = this.state;
 
+    if (typeof this._source !== typeof undefined) {
+      this._source.cancel('Operation canceled due to new request.');
+    }
+
+    this._source = axios.CancelToken.source();
+
     this.setState({ isLoading: true });
 
-    getImages(search, page)
+    getImages(search, page, this._source.token)
       .then(({ data: { photos: { photo: images } } }) => {
         this.setState({ isLoading: false });
         return images;

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { FLICKR_API_URL, FLICKR_API_KEY } from './constants';
 
-export const getImages = (search, page) => {
+export const getImages = (search, page, cancelToken) => {
   const options = {
     method: `flickr.photos.${search.length ? 'search' : 'getRecent'}`,
     page,
@@ -23,5 +23,6 @@ export const getImages = (search, page) => {
       // content_type: 1,
       ...options,
     },
+    cancelToken,
   });
 };
