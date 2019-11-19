@@ -23,6 +23,7 @@ const esNext = [
   '@babel/plugin-syntax-import-meta',
   ['@babel/plugin-proposal-class-properties', { loose: false }],
   '@babel/plugin-proposal-json-strings',
+  '@babel/plugin-transform-runtime',
 ];
 
 module.exports = {
