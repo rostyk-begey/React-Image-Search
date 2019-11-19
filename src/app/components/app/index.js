@@ -51,7 +51,7 @@ export class App extends Component {
   handleScroll = () => {
     const { isLoading } = this.state;
 
-    if (!isLoading && scrollService.getScrollPercent() >= 80) {
+    if (!isLoading && scrollService.isPageEnd()) {
       this.setState(prevState => ({
         page: prevState.page + 1,
       }));
